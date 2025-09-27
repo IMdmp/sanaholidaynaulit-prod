@@ -21,7 +21,6 @@
   const timerEl = document.getElementById('countdown-timer');
   const targetIsoFromServer = timerEl?.dataset?.targetIso;
   const nameFromServer = timerEl?.dataset?.holidayName;
-  const apiBase = timerEl?.dataset?.apiBase;
 
   const d = $('#d'), h = $('#h'), m = $('#m'), s = $('#s');
   const holidayName = $('#holidayName');
@@ -92,54 +91,14 @@
   };
 
   const boot = async () => {
-    // Prefer runtime API data if available
-    if (apiBase) {
-      try {
-        const res = await fetch(`${apiBase}/api/next`);
-        if (res.ok) {
-          const json = await res.json();
-          const next = json?.next;
-          const nextTwo = Array.isArray(json?.nextTwo) ? json.nextTwo : [];
-          if (next && next.dateISO) {
-            const items = [next, ...nextTwo].map(it => ({ name: it.name, iso: toManilaMidnight(it.dateISO), longWeekend: !!it.longWeekend }));
-            renderUpcoming(items);
-
-            const todayISO = getTodayISOInPHT();
-            if (todayISO === next.dateISO) {
-              setTodayMode(next.name);
-              return;
-            }
-            startTimer(toManilaMidnight(next.dateISO), next.name);
-            return;
-          }
-        }
-      } catch (_) {
-        // Ignore and fall back to SSR/static
-      }
-    }
-
-    // Fallback to server-provided dataset or static
+    // No runtime fetch. Source of truth is build-time data attributes & SSR.
     if (targetIsoFromServer && nameFromServer) {
       startTimer(targetIsoFromServer, nameFromServer);
-      if (upcomingList && upcomingList.children.length === 0 && targetIsoFromServer) {
-        renderUpcoming([{ name: nameFromServer, iso: targetIsoFromServer, longWeekend: false }]);
-      }
+      // Upcoming list should be SSR-rendered; leave as-is.
       return;
     }
-
-    // Static fallback
-    let data = [
-      { name: 'Bonifacio Day', iso: toISOManila(y, 11, 30) },
-      { name: 'Christmas Day', iso: toISOManila(y, 12, 25) },
-      { name: 'Rizal Day', iso: toISOManila(y, 12, 30) },
-      { name: "New Year's Day", iso: toISOManila(y + 1, 1, 1) },
-    ].map(h => ({ ...h, longWeekend: approxLongWeekend(h.iso) }));
-
-    const nextIdx = data.findIndex(h => new Date(h.iso).getTime() > now.getTime());
-    const idx = nextIdx === -1 ? data.length - 1 : nextIdx;
-    const nextHoliday = data[idx];
-    renderUpcoming(data.slice(idx, idx + 3));
-    startTimer(nextHoliday.iso, nextHoliday.name);
+    // If somehow missing, do nothing.
+    console.warn('[countdown] Missing server-provided target; cannot start timer.');
   };
 
   boot();

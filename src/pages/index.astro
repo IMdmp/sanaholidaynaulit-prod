@@ -1,6 +1,6 @@
 ---
 import Layout from "../components/Layout.astro"
-import { API_BASE_URL, PUBLIC_API_BASE_URL } from "astro:env/server"
+import { getSiteData } from "../lib/site-data"
 
 const pageTitle = "SanaHolidayNaUlit — Minimal Countdown"
 const pageDescription = "Minimal, fast Philippine holiday countdown and upcoming holidays."
@@ -12,32 +12,15 @@ const formatPHT = (iso:string) => new Date(iso).toLocaleString('en-PH', {
   timeZone: 'Asia/Manila', year: 'numeric', month: 'long', day: 'numeric', weekday: 'short'
 })
 
-// Build-time fetch with graceful fallback
-let nextData: { next?: any, nextTwo?: any[], generatedAt?: string } = {}
-let apiError: string | null = null
-try {
-  const res = await fetch(`${API_BASE_URL}/api/next`)
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  nextData = await res.json()
-} catch (e:any) {
-  apiError = e?.message || 'fetch-failed'
-  nextData = {
-    // Fallback minimal data; dates are examples to keep SSR working
-    next: { name: 'Christmas Day', dateISO: `${new Date().getFullYear()}-12-25`, type: 'regular', status: 'official', longWeekend: true },
-    nextTwo: [
-      { name: 'Rizal Day', dateISO: `${new Date().getFullYear()}-12-30`, type: 'regular', status: 'official', longWeekend: false },
-      { name: "New Year's Day", dateISO: `${new Date().getFullYear()+1}-01-01`, type: 'regular', status: 'official', longWeekend: true },
-    ],
-    generatedAt: new Date().toISOString(),
-  }
-}
+// Build-time single source of truth
+const site = await getSiteData()
 
 const now = Date.now()
-const genAt = nextData.generatedAt ? Date.parse(nextData.generatedAt) : now
+const genAt = site.generatedAt ? Date.parse(site.generatedAt) : now
 const isStale = now - genAt > 24 * 60 * 60 * 1000
 
-const allThree = [nextData.next, ...(nextData.nextTwo ?? [])].filter(Boolean)
-const target = nextData.next
+const allThree = [site.next, ...site.nextTwo].filter(Boolean)
+const target = site.next
 const targetIso = target ? toISOManilaMidnight(target.dateISO) : ''
 ---
 <Layout title={pageTitle} description={pageDescription}>
@@ -75,7 +58,7 @@ const targetIso = target ? toISOManilaMidnight(target.dateISO) : ''
           aria-label="Countdown to next holiday"
           data-target-iso={targetIso}
           data-holiday-name={target?.name}
-          data-api-base={PUBLIC_API_BASE_URL}
+          
         >
           <div class="timer-box">
             <span id="d" class="num" aria-label="Days">00</span>
