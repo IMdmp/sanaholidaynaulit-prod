@@ -1,7 +1,44 @@
 ---
 import Layout from "../components/Layout.astro"
+import { API_BASE_URL, PUBLIC_API_BASE_URL } from "astro:env/server"
+
 const pageTitle = "SanaHolidayNaUlit — Minimal Countdown"
 const pageDescription = "Minimal, fast Philippine holiday countdown and upcoming holidays."
+
+// Utilities for formatting PHT
+const pad2 = (n:number) => String(n).padStart(2, '0')
+const toISOManilaMidnight = (dateISO:string) => `${dateISO}T00:00:00+08:00`
+const formatPHT = (iso:string) => new Date(iso).toLocaleString('en-PH', {
+  timeZone: 'Asia/Manila', year: 'numeric', month: 'long', day: 'numeric', weekday: 'short'
+})
+
+// Build-time fetch with graceful fallback
+let nextData: { next?: any, nextTwo?: any[], generatedAt?: string } = {}
+let apiError: string | null = null
+try {
+  const res = await fetch(`${API_BASE_URL}/api/next`)
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  nextData = await res.json()
+} catch (e:any) {
+  apiError = e?.message || 'fetch-failed'
+  nextData = {
+    // Fallback minimal data; dates are examples to keep SSR working
+    next: { name: 'Christmas Day', dateISO: `${new Date().getFullYear()}-12-25`, type: 'regular', status: 'official', longWeekend: true },
+    nextTwo: [
+      { name: 'Rizal Day', dateISO: `${new Date().getFullYear()}-12-30`, type: 'regular', status: 'official', longWeekend: false },
+      { name: "New Year's Day", dateISO: `${new Date().getFullYear()+1}-01-01`, type: 'regular', status: 'official', longWeekend: true },
+    ],
+    generatedAt: new Date().toISOString(),
+  }
+}
+
+const now = Date.now()
+const genAt = nextData.generatedAt ? Date.parse(nextData.generatedAt) : now
+const isStale = now - genAt > 24 * 60 * 60 * 1000
+
+const allThree = [nextData.next, ...(nextData.nextTwo ?? [])].filter(Boolean)
+const target = nextData.next
+const targetIso = target ? toISOManilaMidnight(target.dateISO) : ''
 ---
 <Layout title={pageTitle} description={pageDescription}>
   <header class="site-header">
@@ -25,8 +62,8 @@ const pageDescription = "Minimal, fast Philippine holiday countdown and upcoming
         <div id="hero-content" class="hero-box">
           <h1 class="main-title">NEXT HOLIDAY</h1>
           <p class="sentiment-line">Matagal pa :(</p>
-          <h2 id="holidayName" class="holiday-name">Loading…</h2>
-          <p id="holidayDate" class="muted" aria-live="polite"></p>
+          <h2 id="holidayName" class="holiday-name">{target?.name ?? 'Loading…'}</h2>
+          <p id="holidayDate" class="muted" aria-live="polite">{target ? formatPHT(toISOManilaMidnight(target.dateISO)) : ''}</p>
         </div>
 
         <div
@@ -36,6 +73,9 @@ const pageDescription = "Minimal, fast Philippine holiday countdown and upcoming
           aria-live="polite"
           aria-atomic="true"
           aria-label="Countdown to next holiday"
+          data-target-iso={targetIso}
+          data-holiday-name={target?.name}
+          data-api-base={PUBLIC_API_BASE_URL}
         >
           <div class="timer-box">
             <span id="d" class="num" aria-label="Days">00</span>
@@ -55,10 +95,14 @@ const pageDescription = "Minimal, fast Philippine holiday countdown and upcoming
           </div>
         </div>
 
+        {isStale && (
+          <p id="staleNotice" class="note muted">Data may be older than 24 hours. Showing cached results.</p>
+        )}
+
         <p class="source">
           Source:
           <a
-            href="https://www.officialgazette.gov.ph/nationwide-holidays/2025/"
+            href="https://www.officialgazette.gov.ph/nationwide-holidays/"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -76,7 +120,14 @@ const pageDescription = "Minimal, fast Philippine holiday countdown and upcoming
     <section class="upcoming">
       <div id="upcoming-container" class="container">
         <h2 class="section">Upcoming</h2>
-        <ul id="upcomingList" class="plain-list" aria-live="polite"></ul>
+        <ul id="upcomingList" class="plain-list" aria-live="polite">
+          {allThree.map((it:any) => (
+            <li>
+              <span class="name">{it.name}{it.longWeekend ? ' — long weekend' : ''}</span>
+              <span class="date">{formatPHT(toISOManilaMidnight(it.dateISO))}</span>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   </main>
@@ -91,5 +142,5 @@ const pageDescription = "Minimal, fast Philippine holiday countdown and upcoming
     </div>
   </footer>
 
-  <script type="module" src={new URL("../scripts/countdown.js", import.meta.url)} defer></script>
+  <script src="/scripts/countdown.js" defer></script>
 </Layout>

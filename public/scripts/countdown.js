@@ -18,31 +18,10 @@
   const now = new Date();
   const y = now.getFullYear();
 
-  // Support server-provided target via data attributes
   const timerEl = document.getElementById('countdown-timer');
   const targetIsoFromServer = timerEl?.dataset?.targetIso;
   const nameFromServer = timerEl?.dataset?.holidayName;
   const apiBase = timerEl?.dataset?.apiBase;
-
-  // Fallback dataset for upcoming list if server didn't render it
-  let data = [
-    { name: 'Bonifacio Day', iso: toISOManila(y, 11, 30) },
-    { name: 'Christmas Day', iso: toISOManila(y, 12, 25) },
-    { name: 'Rizal Day', iso: toISOManila(y, 12, 30) },
-    { name: "New Year's Day", iso: toISOManila(y + 1, 1, 1) },
-  ].map(h => ({ ...h, longWeekend: approxLongWeekend(h.iso) }));
-
-  let nextHoliday;
-  let idx = 0;
-
-  if (targetIsoFromServer && nameFromServer) {
-    nextHoliday = { name: nameFromServer, iso: targetIsoFromServer };
-    // If the upcoming list was server-rendered, we don't need our fallback data
-  } else {
-    const nextIdx = data.findIndex(h => new Date(h.iso).getTime() > now.getTime());
-    idx = nextIdx === -1 ? data.length - 1 : nextIdx;
-    nextHoliday = data[idx];
-  }
 
   const d = $('#d'), h = $('#h'), m = $('#m'), s = $('#s');
   const holidayName = $('#holidayName');
@@ -64,13 +43,6 @@
 
   const renderUpcoming = (items) => {
     if (!upcomingList) return;
-    upcomingList.innerHTML = items.map(it => {
-      const txt = it.longWeekend ? ' — long weekend' : '';
-      return `<li><span class="name">${it.name}${txt}</span><span class="date">${formatPHT(it.iso)}</span></li>`;
-    }).join('');
-  };
-    if (!upcomingList || upcomingList.children.length > 0) return; // don't overwrite SSR content
-    const items = data.slice(idx, idx + 3);
     upcomingList.innerHTML = items.map(it => {
       const txt = it.longWeekend ? ' — long weekend' : '';
       return `<li><span class="name">${it.name}${txt}</span><span class="date">${formatPHT(it.iso)}</span></li>`;
@@ -130,7 +102,6 @@
           const nextTwo = Array.isArray(json?.nextTwo) ? json.nextTwo : [];
           if (next && next.dateISO) {
             const items = [next, ...nextTwo].map(it => ({ name: it.name, iso: toManilaMidnight(it.dateISO), longWeekend: !!it.longWeekend }));
-            // Update list and compute target
             renderUpcoming(items);
 
             const todayISO = getTodayISOInPHT();
@@ -148,29 +119,25 @@
     }
 
     // Fallback to server-provided dataset or static
-    let nextHoliday;
     if (targetIsoFromServer && nameFromServer) {
-      nextHoliday = { name: nameFromServer, iso: targetIsoFromServer };
-      startTimer(nextHoliday.iso, nextHoliday.name);
-      // Render upcoming only if empty
-      if (upcomingList && upcomingList.children.length === 0 && nextHoliday?.iso) {
-        renderUpcoming([{ name: nextHoliday.name, iso: nextHoliday.iso, longWeekend: false }]);
+      startTimer(targetIsoFromServer, nameFromServer);
+      if (upcomingList && upcomingList.children.length === 0 && targetIsoFromServer) {
+        renderUpcoming([{ name: nameFromServer, iso: targetIsoFromServer, longWeekend: false }]);
       }
       return;
     }
 
     // Static fallback
-    const now = new Date();
-    const y = now.getFullYear();
     let data = [
-      { name: 'Bonifacio Day', iso: toManilaMidnight(`${y}-11-30`) },
-      { name: 'Christmas Day', iso: toManilaMidnight(`${y}-12-25`) },
-      { name: 'Rizal Day', iso: toManilaMidnight(`${y}-12-30`) },
-      { name: "New Year's Day", iso: toManilaMidnight(`${y+1}-01-01`) },
-    ];
+      { name: 'Bonifacio Day', iso: toISOManila(y, 11, 30) },
+      { name: 'Christmas Day', iso: toISOManila(y, 12, 25) },
+      { name: 'Rizal Day', iso: toISOManila(y, 12, 30) },
+      { name: "New Year's Day", iso: toISOManila(y + 1, 1, 1) },
+    ].map(h => ({ ...h, longWeekend: approxLongWeekend(h.iso) }));
+
     const nextIdx = data.findIndex(h => new Date(h.iso).getTime() > now.getTime());
     const idx = nextIdx === -1 ? data.length - 1 : nextIdx;
-    nextHoliday = data[idx];
+    const nextHoliday = data[idx];
     renderUpcoming(data.slice(idx, idx + 3));
     startTimer(nextHoliday.iso, nextHoliday.name);
   };

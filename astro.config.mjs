@@ -4,14 +4,21 @@ import { defineConfig, envField } from "astro/config"
 export default defineConfig({
   env: {
     schema: {
-      // Client-accessible variable for runtime API calls
+      // Server-side API base for build-time fetching
       API_BASE_URL: envField.string({
-        context: "client",
+        context: "server",
         access: "public",
-        default: "https://api.sanaholidaynaulit.com",
+        default: "http://localhost:8787",
       }),
 
-      // Server-only variable for build-time fetching (optional for MVP)
+      // Client-side API base for optional runtime freshness checks
+      PUBLIC_API_BASE_URL: envField.string({
+        context: "client",
+        access: "public",
+        default: "http://localhost:8787",
+      }),
+
+      // Server-only variable for build-time authenticated requests (if needed)
       API_SECRET: envField.string({
         context: "server",
         access: "secret",

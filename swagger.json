@@ -1,0 +1,144 @@
+{
+	"openapi": "3.1.0",
+	"info": {
+		"title": "SanaHolidayNaUlit.com API",
+		"version": "1.0.0",
+		"description": "API for Philippine holiday data. Times in Asia/Manila."
+	},
+	"servers": [{ "url": "https://{host}", "variables": { "host": { "default": "example.com" } } }],
+	"paths": {
+		"/api/next": {
+			"get": {
+				"summary": "Get the next upcoming holidays",
+				"responses": {
+					"200": {
+						"description": "Next holiday info",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"next": { "$ref": "#/components/schemas/Holiday" },
+										"nextTwo": {
+											"type": "array",
+											"items": { "$ref": "#/components/schemas/Holiday" }
+										},
+										"generatedAt": { "type": "string", "format": "date-time" }
+									},
+									"required": ["next", "nextTwo", "generatedAt"]
+								}
+							}
+						},
+						"headers": {
+							"Cache-Control": { "schema": { "type": "string" }, "description": "max-age=21600" }
+						}
+					},
+					"500": { "$ref": "#/components/responses/ServerError" }
+				}
+			}
+		},
+		"/api/holidays": {
+			"get": {
+				"summary": "List holidays for a given year",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "year",
+						"schema": { "type": "string", "pattern": "^\\d{4}$" },
+						"required": false,
+						"description": "Year (defaults to current year in Asia/Manila)"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Holiday list",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "array",
+									"items": { "$ref": "#/components/schemas/Holiday" }
+								}
+							}
+						},
+						"headers": {
+							"Cache-Control": { "schema": { "type": "string" }, "description": "max-age=86400" }
+						}
+					},
+					"500": { "$ref": "#/components/responses/ServerError" }
+				}
+			}
+		},
+		"/api/meta": {
+			"get": {
+				"summary": "Get metadata about available years and last update time",
+				"responses": {
+					"200": {
+						"description": "Meta info",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/Meta" }
+							}
+						},
+						"headers": {
+							"Cache-Control": { "schema": { "type": "string" }, "description": "max-age=86400" }
+						}
+					},
+					"500": { "$ref": "#/components/responses/ServerError" }
+				}
+			}
+		},
+		"/health": {
+			"get": {
+				"summary": "Basic health status",
+				"responses": {
+					"200": {
+						"description": "Health payload",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"lastChecked": { "type": "string", "nullable": true },
+										"status": { "type": "string" }
+									},
+									"required": ["status"]
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"components": {
+		"schemas": {
+			"Holiday": {
+				"type": "object",
+				"properties": {
+					"dateISO": { "type": "string", "example": "2025-01-01" },
+					"name": { "type": "string" },
+					"type": { "type": "string", "enum": ["regular", "special"] },
+					"status": { "type": "string", "enum": ["official", "tba", "pending"] },
+					"source": { "type": "string", "enum": ["official_gazette", "nager"], "description": "Data source" },
+					"sourceLink": { "type": "string", "format": "uri", "description": "Source reference link" },
+					"alias": { "type": "string", "nullable": true },
+					"longWeekend": { "type": "boolean", "nullable": true }
+				},
+				"required": ["dateISO", "name", "type", "status"]
+			},
+			"Meta": {
+				"type": "object",
+				"properties": {
+					"yearsAvailable": { "type": "array", "items": { "type": "string" } },
+					"lastChecked": { "type": "string" }
+				},
+				"required": ["yearsAvailable", "lastChecked"]
+			}
+		},
+		"responses": {
+			"ServerError": {
+				"description": "No data available or internal error"
+			}
+		}
+	}
+}
