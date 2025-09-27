@@ -1,0 +1,95 @@
+---
+import Layout from "../components/Layout.astro"
+const pageTitle = "SanaHolidayNaUlit — Minimal Countdown"
+const pageDescription = "Minimal, fast Philippine holiday countdown and upcoming holidays."
+---
+<Layout title={pageTitle} description={pageDescription}>
+  <header class="site-header">
+    <div id="header-container" class="container">
+      <nav class="toolbar" aria-label="Primary">
+        <a
+          class="toolbar-link"
+          href="/visualizer"
+          aria-label="Go to long weekend visualizer"
+        >
+          long weekend visualizer
+          <span class="chev" aria-hidden="true">→</span>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div id="hero-container" class="container">
+        <div id="hero-content" class="hero-box">
+          <h1 class="main-title">NEXT HOLIDAY</h1>
+          <p class="sentiment-line">Matagal pa :(</p>
+          <h2 id="holidayName" class="holiday-name">Loading…</h2>
+          <p id="holidayDate" class="muted" aria-live="polite"></p>
+        </div>
+
+        <div
+          id="countdown-timer"
+          class="timer"
+          role="timer"
+          aria-live="polite"
+          aria-atomic="true"
+          aria-label="Countdown to next holiday"
+        >
+          <div class="timer-box">
+            <span id="d" class="num" aria-label="Days">00</span>
+            <span class="label">DAYS</span>
+          </div>
+          <div class="timer-box">
+            <span id="h" class="num" aria-label="Hours">00</span>
+            <span class="label">HOURS</span>
+          </div>
+          <div class="timer-box">
+            <span id="m" class="num" aria-label="Minutes">00</span>
+            <span class="label">MINUTES</span>
+          </div>
+          <div class="timer-box">
+            <span id="s" class="num" aria-label="Seconds">00</span>
+            <span class="label">SECONDS</span>
+          </div>
+        </div>
+
+        <p class="source">
+          Source:
+          <a
+            href="https://www.officialgazette.gov.ph/nationwide-holidays/2025/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Official Gazette
+          </a>
+        </p>
+
+        <p id="todayBanner" class="muted" hidden>
+          Today is
+          <strong id="todayName"></strong>
+        </p>
+      </div>
+    </section>
+
+    <section class="upcoming">
+      <div id="upcoming-container" class="container">
+        <h2 class="section">Upcoming</h2>
+        <ul id="upcomingList" class="plain-list" aria-live="polite"></ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div id="footer-container" class="container">
+      <small class="muted">
+        &copy;
+        <span id="year"></span>
+        SanaHolidayNaUlit.com
+      </small>
+    </div>
+  </footer>
+
+  <script type="module" src={new URL("../scripts/countdown.js", import.meta.url)} defer></script>
+</Layout>
