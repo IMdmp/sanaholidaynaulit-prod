@@ -86,53 +86,62 @@ body {
 
 /* Main */
 .hero {
-  padding: 26 0 8px;
+  padding: 56px 0 32px;
 }
 #hero-container {
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
 }
 .main-title {
-  margin: 0 0 4px;
-  font-weight: 500;
-  font-size: clamp(32px, 6vw, 48px);
-  letter-spacing: 0.04em;
+  margin: 0;
+  font-weight: 600;
+  font-size: clamp(34px, 6vw, 52px);
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--ink-2);
+  color: var(--ink);
 }
 .sentiment-line {
-  margin: 0 0 16px;
-  font-weight: 500;
-  font-size: 16px;
-  color: var(--accent);
-  letter-spacing: 0;
+  margin: 4px 0 18px;
+  font-weight: 400;
+  font-size: 15px;
+  color: var(--accent-muted);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
 }
 .holiday-name {
-  margin: 0 0 4px;
-  font-weight: 400;
-  font-size: clamp(24px, 4vw, 32px);
-  letter-spacing: -0.01em;
+  margin: 0;
+  font-weight: 500;
+  font-size: clamp(30px, 6vw, 56px);
+  letter-spacing: -0.015em;
   color: var(--ink);
 }
 
 .timer {
-  margin-top: 24px;
+  margin-top: 28px;
   font-variant-numeric: tabular-nums;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
-  gap: 16px;
+  gap: 20px;
   flex-wrap: wrap;
 }
 .timer-box {
   display: flex;
   flex-direction: column;
   align-items: center;
+  text-align: center;
   background: var(--bg);
-  border: 1px solid var(--accent-light);
-  border-radius: 8px;
-  padding: 16px 20px 12px;
-  min-width: 80px;
+  border: 1px solid rgba(204, 119, 34, 0.35);
+  border-radius: 16px;
+  padding: 20px 24px 16px;
+  min-width: 108px;
   position: relative;
+  box-shadow: 0 14px 32px rgba(17, 17, 17, 0.08);
+  transition: transform 160ms ease, box-shadow 160ms ease,
+    border-color 160ms ease;
 }
 .timer-box::before {
   content: "";
@@ -140,22 +149,28 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
+  height: 4px;
   background: linear-gradient(90deg, var(--accent-light), var(--accent));
-  border-radius: 8px 8px 0 0;
+  border-radius: 16px 16px 0 0;
+}
+.timer-box:hover,
+.timer-box:focus-visible {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+  box-shadow: 0 20px 44px rgba(17, 17, 17, 0.14);
 }
 .num {
   font-weight: 300;
-  font-size: clamp(32px, 10vw, 56px);
+  font-size: clamp(36px, 10vw, 62px);
   line-height: 1;
-  letter-spacing: 0.02em;
+  letter-spacing: -0.01em;
   color: var(--ink);
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 .label {
-  font-size: 11px;
-  font-weight: 400;
-  letter-spacing: 0.1em;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
   color: var(--accent-muted);
   text-transform: uppercase;
 }
@@ -237,21 +252,17 @@ body {
     padding: 8px 0;
   }
   .hero {
-    padding-top: 16px;
+    padding: 36px 0 20px;
   }
-  .hero-box {
-    min-height: 150px;
-    padding: 20px 6px 16px;
-  }
-  .hero-box::before {
-    filter: blur(5px);
+  #hero-container {
+    gap: 8px;
   }
   .timer {
     gap: 8px;
   }
   .timer-box {
-    padding: 12px 16px 10px;
-    min-width: 70px;
+    padding: 16px 16px 12px;
+    min-width: 88px;
   }
   .num {
     font-size: clamp(28px, 12vw, 40px);
@@ -268,7 +279,8 @@ body {
   }
   .sentiment-line {
     font-size: 14px;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
+    letter-spacing: 0.18em;
   }
   .holiday-name {
     font-size: clamp(20px, 5vw, 28px);

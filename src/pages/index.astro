@@ -1,28 +1,35 @@
 ---
-import Layout from "../components/Layout.astro"
-import { getSiteData } from "../lib/site-data"
+import Layout from "../components/Layout.astro";
+import { getSiteData } from "../lib/site-data";
 
-const pageTitle = "SanaHolidayNaUlit — Minimal Countdown"
-const pageDescription = "Minimal, fast Philippine holiday countdown and upcoming holidays."
+const pageTitle = "SanaHolidayNaUlit — Minimal Countdown";
+const pageDescription =
+  "Minimal, fast Philippine holiday countdown and upcoming holidays.";
 
 // Utilities for formatting PHT
-const pad2 = (n:number) => String(n).padStart(2, '0')
-const toISOManilaMidnight = (dateISO:string) => `${dateISO}T00:00:00+08:00`
-const formatPHT = (iso:string) => new Date(iso).toLocaleString('en-PH', {
-  timeZone: 'Asia/Manila', year: 'numeric', month: 'long', day: 'numeric', weekday: 'short'
-})
+const pad2 = (n: number) => String(n).padStart(2, "0");
+const toISOManilaMidnight = (dateISO: string) => `${dateISO}T00:00:00+08:00`;
+const formatPHT = (iso: string) =>
+  new Date(iso).toLocaleString("en-PH", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "short",
+  });
 
 // Build-time single source of truth
-const site = await getSiteData()
+const site = await getSiteData();
 
-const now = Date.now()
-const genAt = site.generatedAt ? Date.parse(site.generatedAt) : now
-const isStale = now - genAt > 24 * 60 * 60 * 1000
+const now = Date.now();
+const genAt = site.generatedAt ? Date.parse(site.generatedAt) : now;
+const isStale = now - genAt > 24 * 60 * 60 * 1000;
 
-const allThree = [site.next, ...site.nextTwo].filter(Boolean)
-const target = site.next
-const targetIso = target ? toISOManilaMidnight(target.dateISO) : ''
+const allThree = [site.next, ...site.nextTwo].filter(Boolean);
+const target = site.next;
+const targetIso = target ? toISOManilaMidnight(target.dateISO) : "";
 ---
+
 <Layout title={pageTitle} description={pageDescription}>
   <header class="site-header">
     <div id="header-container" class="container">
@@ -45,8 +52,12 @@ const targetIso = target ? toISOManilaMidnight(target.dateISO) : ''
         <div id="hero-content" class="hero-box">
           <h1 class="main-title">NEXT HOLIDAY</h1>
           <p class="sentiment-line">Matagal pa :(</p>
-          <h2 id="holidayName" class="holiday-name">{target?.name ?? 'Loading…'}</h2>
-          <p id="holidayDate" class="muted" aria-live="polite">{target ? formatPHT(toISOManilaMidnight(target.dateISO)) : ''}</p>
+          <h2 id="holidayName" class="holiday-name">
+            {target?.name ?? "Loading…"}
+          </h2>
+          <p id="holidayDate" class="muted" aria-live="polite">
+            {target ? formatPHT(toISOManilaMidnight(target.dateISO)) : ""}
+          </p>
         </div>
 
         <div
@@ -58,7 +69,6 @@ const targetIso = target ? toISOManilaMidnight(target.dateISO) : ''
           aria-label="Countdown to next holiday"
           data-target-iso={targetIso}
           data-holiday-name={target?.name}
-          
         >
           <div class="timer-box">
             <span id="d" class="num" aria-label="Days">00</span>
@@ -78,9 +88,13 @@ const targetIso = target ? toISOManilaMidnight(target.dateISO) : ''
           </div>
         </div>
 
-        {isStale && (
-          <p id="staleNotice" class="note muted">Data may be older than 24 hours. Showing cached results.</p>
-        )}
+        {
+          isStale && (
+            <p id="staleNotice" class="note muted">
+              Data may be older than 24 hours. Showing cached results.
+            </p>
+          )
+        }
 
         <p class="source">
           Source:
@@ -104,12 +118,19 @@ const targetIso = target ? toISOManilaMidnight(target.dateISO) : ''
       <div id="upcoming-container" class="container">
         <h2 class="section">Upcoming</h2>
         <ul id="upcomingList" class="plain-list" aria-live="polite">
-          {allThree.map((it:any) => (
-            <li>
-              <span class="name">{it.name}{it.longWeekend ? ' — long weekend' : ''}</span>
-              <span class="date">{formatPHT(toISOManilaMidnight(it.dateISO))}</span>
-            </li>
-          ))}
+          {
+            allThree.map((it: any) => (
+              <li>
+                <span class="name">
+                  {it.name}
+                  {it.longWeekend ? " — long weekend" : ""}
+                </span>
+                <span class="date">
+                  {formatPHT(toISOManilaMidnight(it.dateISO))}
+                </span>
+              </li>
+            ))
+          }
         </ul>
       </div>
     </section>
