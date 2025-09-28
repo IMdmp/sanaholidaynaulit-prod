@@ -2,9 +2,12 @@
 import Layout from "../components/Layout.astro";
 import { getSiteData } from "../lib/site-data";
 
-const pageTitle = "SanaHolidayNaUlit — Minimal Countdown";
+const pageTitle = "Sana Holiday na ulit!";
 const pageDescription =
   "Minimal, fast Philippine holiday countdown and upcoming holidays.";
+const canonicalUrl = "https://sanaholidaynaulit.com/";
+const socialImage = new URL("/social-card.png", Astro.url).toString();
+const socialImageAlt = "Calendar blocks marking the next Philippine holiday";
 
 // Utilities for formatting PHT
 const pad2 = (n: number) => String(n).padStart(2, "0");
@@ -28,9 +31,54 @@ const isStale = now - genAt > 24 * 60 * 60 * 1000;
 const allThree = [site.next, ...site.nextTwo].filter(Boolean);
 const target = site.next;
 const targetIso = target ? toISOManilaMidnight(target.dateISO) : "";
+const eventSchema = allThree.map((holiday: any) => ({
+  "@context": "https://schema.org",
+  "@type": "Event",
+  name: holiday.name,
+  startDate: toISOManilaMidnight(holiday.dateISO),
+  endDate: toISOManilaMidnight(holiday.dateISO),
+  eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+  eventStatus: "https://schema.org/EventScheduled",
+  location: {
+    "@type": "Place",
+    name: "Philippines",
+    address: {
+      "@type": "PostalAddress",
+      addressCountry: "PH",
+    },
+  },
+  description: `${holiday.name} holiday in the Philippines`,
+}));
 ---
 
-<Layout title={pageTitle} description={pageDescription}>
+<Layout
+  title={pageTitle}
+  description={pageDescription}
+  canonicalUrl={canonicalUrl}
+  imageUrl={socialImage}
+>
+  <Fragment slot="head">
+    <meta name="author" content="SanaHolidayNaUlit" />
+    <meta name="theme-color" content="#cc7722" />
+    <meta property="og:image:alt" content={socialImageAlt} />
+    <meta name="twitter:image:alt" content={socialImageAlt} />
+    <script type="application/ld+json">
+      {JSON.stringify([
+        {
+          '@context': 'https://schema.org',
+          '@type': 'WebSite',
+          name: 'SanaHolidayNaUlit',
+          url: canonicalUrl,
+          description: pageDescription,
+          potentialAction: {
+            '@type': 'ViewAction',
+            target: canonicalUrl,
+          },
+        },
+        ...eventSchema,
+      ])}
+    </script>
+  </Fragment>
   <header class="site-header">
     <div id="header-container" class="container">
       <nav class="toolbar" aria-label="Primary">
