@@ -95,6 +95,17 @@ body {
   align-items: center;
   gap: 12px;
 }
+.hero-box {
+  width: 100%;
+}
+.hero-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  width: 100%;
+  gap: 16px;
+  margin-bottom: 8px;
+}
 .main-title {
   margin: 0;
   font-weight: 600;
@@ -104,12 +115,16 @@ body {
   color: var(--ink);
 }
 .sentiment-line {
-  margin: 4px 0 18px;
-  font-weight: 400;
-  font-size: 15px;
+  margin: 0;
+  font-weight: 500;
+  font-size: clamp(18px, 3vw, 26px);
   color: var(--accent-muted);
   letter-spacing: 0.22em;
   text-transform: uppercase;
+}
+.sentiment-secondary {
+  text-align: center;
+  margin: 32px auto 0;
 }
 .holiday-name {
   margin: 0;
@@ -175,16 +190,28 @@ body {
   text-transform: uppercase;
 }
 .source {
-  margin-top: 16px;
+  margin: 0;
   font-size: 12px;
   color: var(--ink-2);
-  text-align: center;
+  text-align: left;
 }
 .source a {
   color: var(--accent);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
+}
+.footer-link {
+  color: var(--accent);
+  text-decoration: none;
+}
+.footer-link:hover {
+  color: var(--accent-muted);
+  text-decoration: underline;
+}
+.footer-link:focus-visible {
+  outline: 1px dotted var(--accent);
+  outline-offset: 2px;
 }
 .source a:hover {
   color: var(--accent-muted);
@@ -242,20 +269,54 @@ body {
   display: inline-block;
   padding: 12px 0;
 }
+.footer-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+.footer-meta .source {
+  text-align: right;
+}
 
 /* Mobile tweaks */
+@media (max-width: 768px) {
+  .hero {
+    padding: 24px 0 16px;
+  }
+  #hero-container {
+    gap: 4px;
+  }
+}
 @media (max-width: 480px) {
   .container {
     padding: 16px;
   }
   .toolbar {
-    padding: 8px 0;
+    padding: 4px 0;
   }
   .hero {
-    padding: 36px 0 20px;
+    padding: 20px 0 12px;
   }
   #hero-container {
+    gap: 2px;
+  }
+  .hero-meta {
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .footer-meta {
+    flex-direction: column;
+    align-items: center;
     gap: 8px;
+  }
+  .footer-meta .source {
+    text-align: center;
+  }
+  .sentiment-secondary {
+    margin: 24px auto 0;
+    padding-inline: 16px;
   }
   .timer {
     gap: 8px;
