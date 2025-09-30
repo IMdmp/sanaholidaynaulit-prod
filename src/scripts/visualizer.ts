@@ -233,8 +233,8 @@ const renderMonthSections = (groups: MonthGroup[]) => {
           <header class="month-header">
             <h2 class="month-title">${group.label}</h2>
           </header>
-          <div class="month-calendar">${calendarHtml}</div>
           <div class="month-details">${cardsHtml}</div>
+          <div class="month-calendar">${calendarHtml}</div>
         </section>
       `;
     })
