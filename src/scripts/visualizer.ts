@@ -143,9 +143,17 @@ const renderCalendar = (
 };
 
 const renderLongWeekendCard = (lw: LongWeekend, index: number) => {
+  const leaveVerb =
+    lw.durationLabel === "very long weekend"
+      ? "Take 1 day off"
+      : "Take 1 day off";
+  const leaveTail =
+    lw.durationLabel === "very long weekend"
+      ? "for a very long weekend!"
+      : `for a ${lw.durationLabel}!`;
   const ctaMessage =
     lw.type === "suggested"
-      ? `<div class="cta-message"><span class="cta-highlight">Take 1 day off</span> for a ${lw.durationLabel}!</div>`
+      ? `<div class="cta-message"><span class="cta-highlight">${leaveVerb}</span> ${leaveTail}</div>`
       : "";
   const badge =
     lw.type === "suggested"
@@ -199,6 +207,9 @@ const groupWeekendsByMonth = (longWeekends: LongWeekend[]): MonthGroup[] => {
 
     const holidayISO = toPHTMidnightISO(lw.holiday.dateISO);
     group.modifiers.holiday.add(holidayISO);
+    if (lw.extraHolidayISOs) {
+      lw.extraHolidayISOs.forEach((iso) => group.modifiers.holiday.add(iso));
+    }
     if (lw.suggestedLeaveISO) {
       group.modifiers.suggested.add(lw.suggestedLeaveISO);
     }
