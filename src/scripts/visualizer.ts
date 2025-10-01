@@ -216,6 +216,18 @@ const groupWeekendsByMonth = (longWeekends: LongWeekend[]): MonthGroup[] => {
   return Array.from(map.values()).sort((a, b) => a.key.localeCompare(b.key));
 };
 
+const filterUpcomingGroups = (groups: MonthGroup[]) => {
+  const today = new Date();
+  const todayYear = today.getFullYear();
+  const todayMonth = today.getMonth();
+
+  return groups.filter((group) => {
+    if (group.year > todayYear) return true;
+    if (group.year < todayYear) return false;
+    return group.month >= todayMonth;
+  });
+};
+
 const renderMonthSections = (groups: MonthGroup[]) => {
   return groups
     .map((group) => {
@@ -242,14 +254,35 @@ const renderMonthSections = (groups: MonthGroup[]) => {
 };
 
 const renderSidebar = (flat: GroupedWeekend[]) => {
-  return flat
-    .map(({ lw, index, groupKey }) => {
-      const start = new Date(lw.startISO);
-      const month = MONTH_NAMES_SHORT[start.getMonth()];
-      const day = start.getDate();
-      return `<li><a href="#month-${groupKey}" data-card="${index}">${month} ${day}</a></li>`;
-    })
-    .join("");
+  let currentYear: number | null = null;
+  const parts: string[] = [];
+
+  flat.forEach(({ lw, index, groupKey }) => {
+    const start = new Date(lw.startISO);
+    const month = MONTH_NAMES_SHORT[start.getMonth()];
+    const day = start.getDate();
+    const year = start.getFullYear();
+
+    if (currentYear !== year) {
+      if (currentYear !== null) {
+        parts.push("</ul></li>");
+      }
+      parts.push(
+        `<li class="sidebar-year"><span class="sidebar-year-label">${year} Long Weekends</span><ul class="sidebar-year-list">`
+      );
+      currentYear = year;
+    }
+
+    parts.push(
+      `<li><a href="#month-${groupKey}" data-card="${index}">${month} ${day}</a></li>`
+    );
+  });
+
+  if (currentYear !== null) {
+    parts.push("</ul></li>");
+  }
+
+  return parts.join("");
 };
 
 const initScrollSpy = () => {
@@ -288,6 +321,26 @@ const initSmoothScroll = () => {
   });
 };
 
+const initScrollTop = () => {
+  const button = document.getElementById("scrollTop");
+  if (!button) return;
+
+  const toggleVisibility = () => {
+    if (window.scrollY > 320) {
+      button.classList.add("visible");
+    } else {
+      button.classList.remove("visible");
+    }
+  };
+
+  toggleVisibility();
+  document.addEventListener("scroll", toggleVisibility, { passive: true });
+
+  button.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+};
+
 // Get today's PHT midnight ISO (YYYY-MM-DDT00:00:00+08:00)
 const getTodayPHTISO = () => {
   const nowPHT = new Date(
@@ -308,7 +361,6 @@ async function boot() {
   const pageYear = $("#pageYear");
   if (pageYear) pageYear.textContent = `(${currentYear})`;
   const sidebarTitle = $("#sidebarTitle");
-  if (sidebarTitle) sidebarTitle.textContent = `${currentYear} Long Weekends`;
 
   // Read holidays from build-time embedded data on window
   let holidays: Holiday[] = [];
@@ -362,10 +414,12 @@ async function boot() {
     return;
   }
 
-  const groups = groupWeekendsByMonth(longWeekends);
-  const flat = groups.flatMap((group) => group.longWeekends);
+  const allGroups = groupWeekendsByMonth(longWeekends);
+  const upcomingGroups = filterUpcomingGroups(allGroups);
+  const flat = upcomingGroups.flatMap((group) => group.longWeekends);
 
-  if (cardsContainer) cardsContainer.innerHTML = renderMonthSections(groups);
+  if (cardsContainer)
+    cardsContainer.innerHTML = renderMonthSections(upcomingGroups);
   if (sidebarNav) sidebarNav.innerHTML = renderSidebar(flat);
 
   // Jump to the nearest upcoming long weekend (or the current one if today is within a range)
@@ -398,6 +452,7 @@ async function boot() {
   setTimeout(() => {
     initScrollSpy();
     initSmoothScroll();
+    initScrollTop();
   }, 100);
 }
 

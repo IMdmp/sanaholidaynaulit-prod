@@ -34,7 +34,7 @@ const currentYearPHT = (): string => {
 };
 
 // Helper functions for processing local data
-const getHolidaysForYear = (year: string): Holiday[] => {
+const getLocalHolidaysForYear = (year: string): Holiday[] => {
   return officialData
     .filter(
       (holiday) =>
@@ -68,7 +68,7 @@ const findNextHolidays = (
   if (upcomingHolidays.length === 0) {
     // If no upcoming holidays this year, get holidays from next year
     const nextYear = String(now.getFullYear() + 1);
-    const nextYearHolidays = getHolidaysForYear(nextYear);
+    const nextYearHolidays = getLocalHolidaysForYear(nextYear);
     return {
       next: nextYearHolidays[0] as Holiday & { dateISO: string },
       nextTwo: nextYearHolidays.slice(1, 3) as (Holiday & {
@@ -83,8 +83,14 @@ const findNextHolidays = (
   };
 };
 
-const processLocalData = (year: string): SiteData => {
-  const holidays = getHolidaysForYear(year);
+const collectLocalHolidays = (years: string[]): Holiday[] => {
+  return years
+    .flatMap((yr) => getLocalHolidaysForYear(yr))
+    .sort((a, b) => a.dateISO.localeCompare(b.dateISO));
+};
+
+const processLocalData = (year: string, extraYears: string[]): SiteData => {
+  const holidays = collectLocalHolidays([year, ...extraYears]);
   const { next, nextTwo } = findNextHolidays(holidays);
 
   return {
@@ -103,20 +109,32 @@ export function getSiteData(): Promise<SiteData> {
 
     // Use local data if USE_LOCAL_DATA environment variable is true
     if (USE_LOCAL_DATA) {
-      return processLocalData(year);
+      const extraYears = [String(Number(year) + 1)];
+      return processLocalData(year, extraYears);
     }
 
     // Otherwise, use API calls as before
-    const [nextRes, holidaysRes] = await Promise.all([
+    const nextYear = String(Number(year) + 1);
+
+    const [nextRes, holidaysRes, holidaysNextRes] = await Promise.all([
       fetch(`${API_BASE_URL}/api/next`),
       fetch(`${API_BASE_URL}/api/holidays?year=${year}`),
+      fetch(`${API_BASE_URL}/api/holidays?year=${nextYear}`),
     ]);
     if (!nextRes.ok) throw new Error(`/api/next failed: ${nextRes.status}`);
     if (!holidaysRes.ok)
       throw new Error(`/api/holidays failed: ${holidaysRes.status}`);
+    if (!holidaysNextRes.ok)
+      throw new Error(
+        `/api/holidays (next year) failed: ${holidaysNextRes.status}`
+      );
 
     const nextData = (await nextRes.json()) as NextResponse;
-    const holidays = (await holidaysRes.json()) as Holiday[];
+    const holidaysCurrent = (await holidaysRes.json()) as Holiday[];
+    const holidaysNext = (await holidaysNextRes.json()) as Holiday[];
+    const holidays = [...holidaysCurrent, ...holidaysNext].sort((a, b) =>
+      a.dateISO.localeCompare(b.dateISO)
+    );
 
     return {
       holidays,

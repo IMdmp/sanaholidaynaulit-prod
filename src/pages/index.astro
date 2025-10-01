@@ -90,6 +90,14 @@ const eventSchema = allThree.map((holiday: any) => ({
           long weekend visualizer
           <span class="chev" aria-hidden="true">→</span>
         </a>
+        <a
+          class="toolbar-link"
+          href="/holidays"
+          aria-label="Browse all holidays"
+        >
+          all holidays
+          <span class="chev" aria-hidden="true">→</span>
+        </a>
       </nav>
     </div>
   </header>
@@ -173,32 +181,6 @@ const eventSchema = allThree.map((holiday: any) => ({
       </div>
     </section>
   </main>
-
-  <footer class="site-footer">
-    <div id="footer-container" class="container">
-      <div class="footer-meta">
-        <small class="muted">
-          &copy;
-          <span id="year"></span>
-          SanaHolidayNaUlit.com
-          <br />
-          <a class="footer-link" href="mailto:contact@sanaholidaynaulit.com">
-            contact@sanaholidaynaulit.com
-          </a>
-        </small>
-        <p class="source">
-          Source:
-          <a
-            href="https://www.officialgazette.gov.ph/nationwide-holidays/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Official Gazette
-          </a>
-        </p>
-      </div>
-    </div>
-  </footer>
 
   <script src="/scripts/countdown.js" defer></script>
 </Layout>

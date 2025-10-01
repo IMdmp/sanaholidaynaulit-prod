@@ -1,0 +1,477 @@
+---
+import Layout from "../components/Layout.astro";
+import { getSiteData } from "../lib/site-data";
+
+const pageTitle = "All Philippine Holidays — SanaHolidayNaUlit";
+const pageDescription =
+  "Browse, search, and filter all official Philippine holidays.";
+
+let site;
+try {
+  site = await getSiteData();
+} catch (error) {
+  console.warn("Failed to load site data for holidays page:", error);
+  site = {
+    holidays: [],
+    next: null,
+    nextTwo: [],
+    generatedAt: new Date().toISOString(),
+    year: new Date().getFullYear().toString(),
+  };
+}
+
+const holidays = site.holidays || [];
+const yearsIncluded = Array.from(
+  new Set(holidays.map((holiday: Holiday) => holiday.dateISO.slice(0, 4)))
+).sort();
+const holidaysJSON = JSON.stringify(holidays);
+const holidaysB64 = Buffer.from(holidaysJSON).toString("base64");
+const canonicalUrl = new URL("/holidays", Astro.url).toString();
+---
+
+<Layout
+  title={pageTitle}
+  description={pageDescription}
+  canonicalUrl={canonicalUrl}
+>
+  <Fragment slot="head">
+    <script is:inline define:vars={{ holidaysB64 }}>
+      window.__HOLIDAY_DATA__ = JSON.parse(atob(holidaysB64));
+    </script>
+  </Fragment>
+
+  <header class="site-header">
+    <div class="container">
+      <nav class="toolbar" aria-label="Primary">
+        <a class="toolbar-link" href="/" aria-label="Back to countdown">
+          <span class="chev" aria-hidden="true">→</span>
+          back to countdown
+        </a>
+        <a
+          class="toolbar-link"
+          href="/visualizer"
+          aria-label="Open long weekend visualizer"
+        >
+          <span class="chev" aria-hidden="true">→</span>
+          long weekend visualizer
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">Holiday directory</p>
+          <h1 class="page-title">
+            All Holidays
+            <span class="muted years-range">
+              ({yearsIncluded[0]} – {yearsIncluded[yearsIncluded.length - 1]})
+            </span>
+          </h1>
+          <p class="muted">
+            Search, sort, and filter official Philippine holidays to plan your
+            year. Data updates automatically when new proclamations arrive.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="table-section" aria-labelledby="tableHeading">
+      <div class="container">
+        <header class="table-controls">
+          <div class="control search-control">
+            <label class="control-label" for="holidaySearch">Search</label>
+            <input
+              id="holidaySearch"
+              type="search"
+              placeholder="Find by name or date"
+              autocomplete="off"
+              spellcheck="false"
+              inputmode="search"
+            />
+          </div>
+          <div class="control select-control">
+            <label class="control-label" for="typeFilter">Type</label>
+            <select id="typeFilter" aria-label="Filter by holiday type">
+              <option value="all">All types</option>
+              <option value="regular">Regular</option>
+              <option value="special">Special</option>
+            </select>
+          </div>
+          <div class="control select-control">
+            <label class="control-label" for="statusFilter">Status</label>
+            <select id="statusFilter" aria-label="Filter by holiday status">
+              <option value="all">All statuses</option>
+              <option value="official">Official</option>
+              <option value="pending">Pending</option>
+              <option value="tba">TBA</option>
+            </select>
+          </div>
+          <div class="control select-control">
+            <label class="control-label" for="yearFilter">Year</label>
+            <select id="yearFilter" aria-label="Filter by holiday year">
+              <option value="all">All years</option>
+              {
+                yearsIncluded.map((year) => (
+                  <option value={year}>{year}</option>
+                ))
+              }
+            </select>
+          </div>
+        </header>
+
+        <div class="table-summary" role="status" aria-live="polite">
+          <p id="matchCount" class="muted">Loading holidays…</p>
+        </div>
+
+        <div id="tableWrapper" class="table-wrapper">
+          <table class="holiday-table" aria-describedby="tableHeading">
+            <caption id="tableHeading" class="vh">
+              Official Philippine holidays for {yearsIncluded.join(", ")}
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">
+                  <button type="button" class="sort-button" data-sort="dateISO">
+                    Date
+                    <span class="sort-indicator" aria-hidden="true">↕</span>
+                  </button>
+                </th>
+                <th scope="col">
+                  <button type="button" class="sort-button" data-sort="name">
+                    Holiday
+                    <span class="sort-indicator" aria-hidden="true">↕</span>
+                  </button>
+                </th>
+                <th scope="col" class="meta-header">
+                  <span class="meta-header-label">
+                    <button type="button" class="sort-button" data-sort="type">
+                      Type
+                      <span class="sort-indicator" aria-hidden="true">↕</span>
+                    </button>
+                    <span class="meta-separator" aria-hidden="true">/</span>
+                    <button
+                      type="button"
+                      class="sort-button"
+                      data-sort="status"
+                    >
+                      Status
+                      <span class="sort-indicator" aria-hidden="true">↕</span>
+                    </button>
+                  </span>
+                </th>
+              </tr>
+            </thead>
+            <tbody id="holidayTableBody">
+              <tr>
+                <td colspan="4">
+                  <div class="table-message" role="status" aria-live="polite">
+                    <p>Loading holidays…</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div id="emptyState" class="empty-state" hidden>
+          <h2>No matching holidays</h2>
+          <p class="muted">
+            Try adjusting your search term or filters to see more results.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <style is:global>
+    :root {
+      --table-border: rgba(17, 17, 17, 0.08);
+      --table-header: #f8f8f8;
+      --badge-regular: #cc7722;
+      --badge-special: #5b6dcd;
+      --status-official: #0c7d48;
+      --status-pending: #cfa21f;
+      --status-tba: #b84b5f;
+      --control-bg: #fafafa;
+      --control-border: rgba(17, 17, 17, 0.12);
+    }
+
+    .page-hero {
+      padding: 48px 0 32px;
+      border-bottom: 1px solid var(--table-border);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 24px;
+    }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 12px;
+      color: var(--accent-muted);
+    }
+
+    .page-title {
+      margin: 0;
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+
+    .table-section {
+      padding: 32px 0 64px;
+    }
+
+    .table-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: flex-end;
+      margin-bottom: 24px;
+    }
+
+    .control {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .control-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--ink-2);
+    }
+
+    input[type="search"],
+    select {
+      appearance: none;
+      border: 1px solid var(--control-border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 14px;
+      font-family: inherit;
+      background: var(--control-bg);
+      color: var(--ink);
+      min-width: 200px;
+      transition: border-color 0.2s ease;
+    }
+
+    input[type="search"]:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(204, 119, 34, 0.25);
+    }
+
+    .table-summary {
+      margin-bottom: 16px;
+    }
+
+    .table-wrapper {
+      background: var(--bg);
+      border: 1px solid var(--table-border);
+      border-radius: 12px;
+      overflow-x: auto;
+      box-shadow: 0 24px 48px rgba(17, 17, 17, 0.06);
+    }
+
+    .table-wrapper.table-error {
+      border-color: rgba(184, 75, 95, 0.4);
+      box-shadow: 0 20px 40px rgba(184, 75, 95, 0.15);
+    }
+
+    .holiday-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .holiday-table thead th {
+      position: sticky;
+      top: 0;
+      background: var(--table-header);
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--table-border);
+      font-weight: 400;
+      color: var(--ink-2);
+    }
+
+    .holiday-table tbody th,
+    .holiday-table tbody td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--table-border);
+      vertical-align: top;
+    }
+
+    .holiday-table tbody tr:last-child th,
+    .holiday-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .holiday-name {
+      font-weight: 500;
+      color: var(--ink);
+      font-size: 14px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #fff;
+      background: var(--accent);
+      white-space: nowrap;
+    }
+
+    .badge-regular {
+      background: var(--badge-regular);
+    }
+
+    .badge-special {
+      background: var(--badge-special);
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      letter-spacing: 0.02em;
+      color: var(--ink);
+    }
+
+    .status::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.5;
+    }
+
+    .status-official {
+      color: var(--status-official);
+    }
+
+    .status-pending {
+      color: var(--status-pending);
+    }
+
+    .status-tba {
+      color: var(--status-tba);
+    }
+
+    .sort-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: none;
+      background: transparent;
+      font: inherit;
+      color: inherit;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .sort-button:focus-visible {
+      outline: 1px dotted var(--accent);
+      outline-offset: 4px;
+    }
+
+    .sort-indicator {
+      font-size: 14px;
+      color: var(--accent-muted);
+    }
+
+    .meta-header-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    .meta-separator {
+      color: var(--ink-2);
+      font-size: 12px;
+    }
+
+    .holiday-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .table-message {
+      padding: 32px 16px;
+      text-align: center;
+      color: var(--ink-2);
+    }
+
+    .empty-state {
+      margin-top: 32px;
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        text-align: left;
+      }
+
+      .table-controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      input[type="search"],
+      select {
+        width: 100%;
+      }
+
+      .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .holiday-table {
+        min-width: 560px;
+      }
+
+      .holiday-table thead th {
+        font-size: 12px;
+        padding: 10px 12px;
+      }
+
+      .holiday-table tbody th,
+      .holiday-table tbody td {
+        padding: 12px;
+        font-size: 13px;
+      }
+
+      .holiday-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+    }
+  </style>
+
+  <script src="../scripts/holidays.ts"></script>
+</Layout>

@@ -4,12 +4,15 @@ export interface Props {
   description?: string;
   canonicalUrl?: string;
   imageUrl?: string;
+  showFooter?: boolean;
 }
+const currentYear = new Date().getFullYear();
 const {
   title = "Sana Holiday na ulit",
   description = "Philippine holiday countdown and listings",
-  canonicalUrl = "https://sanaholidaynaulit.com/",
-  imageUrl = "https://sanaholidaynaulit.com/social-card.png",
+  canonicalUrl = Astro.url.toString(),
+  imageUrl = new URL("/social-card.png", Astro.url).toString(),
+  showFooter = true,
 } = Astro.props;
 import "../styles/global.css";
 ---
@@ -42,5 +45,37 @@ import "../styles/global.css";
   </head>
   <body>
     <slot />
+    {
+      showFooter && (
+        <footer class="site-footer">
+          <div id="footer-container" class="container">
+            <div class="footer-meta">
+              <small class="muted">
+                &copy;
+                {currentYear}
+                SanaHolidayNaUlit.com
+                <br />
+                <a
+                  class="footer-link"
+                  href="mailto:contact@sanaholidaynaulit.com"
+                >
+                  contact@sanaholidaynaulit.com
+                </a>
+              </small>
+              <p class="source">
+                Source:
+                <a
+                  href="https://www.officialgazette.gov.ph/nationwide-holidays/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Official Gazette
+                </a>
+              </p>
+            </div>
+          </div>
+        </footer>
+      )
+    }
   </body>
 </html>
